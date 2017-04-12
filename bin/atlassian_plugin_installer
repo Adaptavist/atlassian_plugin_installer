@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
-
-require 'uri'
-require 'json'
-require 'net/http'
-require 'net/https'
+require 'atlassian_plugin_installer'
+require 'marketplace_accessor'
 
 admin_username = ARGV[0]
 admin_password = ARGV[1] == "" ? ENV['ADMIN_PASS'] : ARGV[1]
@@ -18,116 +15,22 @@ if !(admin_username and admin_password and application_url and plugin_key and pl
     puts "Usage: atlassian_plugin_installer admin_username admin_password application_url plugin_key plugin_version marketplace_username marketplace_password"
     exit
 end
-# admin_username = "administrator"
-# admin_password = ""
-# application_url = "https://url"
-# plugin_key = "com.onresolve.jira.groovy.groovyrunner"
-# plugin_version = "4.3.19"
-# marketplace_username = "mbrehovsky@adaptavist.com"
-# marketplace_password = "super_secret_password"
-# # timebomb license
-# license = "AAABCA0ODAoPeNpdj01PwkAURffzKyZxZ1IyUzARkllQ24gRaQMtGnaP8VEmtjPNfFT59yJVFyzfu
-# bkn796Ux0Bz6SmbUM5nbDzj97RISxozHpMUnbSq88poUaLztFEStUN6MJZ2TaiVpu/YY2M6tI6sQ
-# rtHmx8qd74EZ+TBIvyUU/AoYs7jiE0jzknWQxMuifA2IBlUbnQ7AulVjwN9AaU9atASs69O2dNFU
-# 4wXJLc1aOUGw9w34JwCTTZoe7RPqUgep2X0Vm0n0fNut4gSxl/Jcnj9nFb6Q5tP/Ueu3L+0PHW4g
-# hZFmm2zZV5k6/95CbR7Y9bYGo/zGrV3Ir4jRbDyCA6vt34DO8p3SDAsAhQnJjLD5k9Fr3uaIzkXK
-# f83o5vDdQIUe4XequNCC3D+9ht9ZYhNZFKmnhc=X02dh"
 
 # retrieve build number for plugin version
-puts "Getting build_number from marketplace for #{plugin_key} and version #{plugin_version}"
-marketplace_url = "https://marketplace.atlassian.com/rest/2/addons"
-if plugin_version == "latest"
-    url = "#{marketplace_url}/#{plugin_key}/versions/latest"
-else
-    url = "#{marketplace_url}/#{plugin_key}/versions/name/#{plugin_version}"
-end
-uri = URI(url)
-puts uri
-http = Net::HTTP.new(uri.host, uri.port)
-http.use_ssl = true if url.start_with? "https"
-request = Net::HTTP::Get.new(uri.request_uri)
-request.basic_auth(marketplace_username, marketplace_password)
-response = http.request(request)
-plugin_build_number = JSON.parse(response.body)['buildNumber'] # parse access token
-raise "Can not find build number for plugin #{plugin_key} #{plugin_version}" unless plugin_build_number
-puts "Marketplace build_number response: #{response.inspect}"
+marketplace = AtlassianPluginInstaller::MarketplaceAccessor.new(marketplace_username, marketplace_password)
+plugin_build_number = marketplace.resolve_build_number_from_marketplace(plugin_key, plugin_version)
 
+installer = AtlassianPluginInstaller::AtlassianPluginInstaller.new(application_url, admin_username, admin_password)
 # request access token
-url = "#{application_url}/rest/plugins/1.0/?os_authType=basic"
-uri = URI(url)
-http = Net::HTTP.new(uri.host, uri.port)
-http.use_ssl = true if url.start_with? "https"
-request = Net::HTTP::Get.new(uri.request_uri)
-request.initialize_http_header({"Accept" => "application/vnd.atl.plugins.installed+json"})
-request.basic_auth(admin_username, admin_password)
-
-response = http.request(request)
-token = response['upm-token'] # parse access token
-raise "Can not retrieve token from #{application_url} with #{admin_username}" unless token
+token = installer.fetch_application_access_token
 
 # install plugin using the token
-# curl -i -H "Accept: application/json" -H "Content-Type: application/vnd.atl.plugins.install.uri+json" 
-# -X POST -u admin -d '{"pluginUri":"https://marketplace.atlassian.com/download/plugins/com.onresolve.jira.groovy.groovyrunner/version/1001120"}' 
-# https://avst-test1129.dyn.adaptavist.com//rest/plugins/1.0/?token=-6906413003836887391
-puts "Installing plugin #{plugin_key}"
-plugin_uri = "https://marketplace.atlassian.com/download/plugins/#{plugin_key}/version/#{plugin_build_number}"
-url = "#{application_url}/rest/plugins/1.0/?token=#{token}"
-body = {
-   "pluginUri" => plugin_uri
-}.to_json
+installer.install_plugin(plugin_key, plugin_build_number, token)
 
-uri = URI.parse(url)
-https = Net::HTTP.new(uri.host,uri.port)
-https.use_ssl = true if url.start_with? "https"
-req = Net::HTTP::Post.new("#{uri.request_uri}")
-
-req.basic_auth(admin_username, admin_password)
-req.body = body
-req['Accept'] = 'application/json'
-req['Content-Type'] = 'application/vnd.atl.plugins.install.uri+json'    
-res = https.request(req)
-puts "Install plugin response: #{res.inspect}"
-
-puts "Waiting until the plugin gets installed"
-retries = 10
-sleep_time = 10 
-for i in (0..retries) do
-    url = "#{application_url}/rest/plugins/1.0/#{plugin_key}-key/summary"
-    uri = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true if url.start_with? "https"
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request.initialize_http_header({"Accept" => "application/vnd.atl.plugins+json"})
-    request.basic_auth(admin_username, admin_password)
-
-    response = http.request(request)
-    if response.code == '200'
-        puts "Installation completed..."
-        break
-    end
-    puts "Fetching #{url}"
-    puts "Response was #{response.inspect}"
-    puts "Installation still not done, sleeping for #{sleep_time}, retry #{i}/#{retries}"
-    sleep(sleep_time)
+unless (installer.installation_completed(plugin_key))
+    raise "Installation failed, plugin not available."
 end
 
-# install license
 if license
-    puts "Installing license"
-    url = "#{application_url}/rest/plugins/1.0/#{plugin_key}-key/license"
-    body = {
-       "rawLicense" => license
-    }.to_json
-
-    uri = URI.parse(url)
-    https = Net::HTTP.new(uri.host,uri.port)
-    https.use_ssl = true if url.start_with? "https"
-    req = Net::HTTP::Put.new("#{uri.request_uri}")
-
-    req.basic_auth(admin_username, admin_password)
-    req.body = body
-    req['Accept'] = 'application/json'
-    req['Content-Type'] = "application/vnd.atl.plugins+json"
-    res = https.request(req)
-    puts "License response: #{res.inspect} #{res.body}"
-    end
+    installer.install_license(plugin_key, license)
+end
