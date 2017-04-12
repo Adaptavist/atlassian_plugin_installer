@@ -1,0 +1,19 @@
+# coding: utf-8
+require File.expand_path('../lib/atlassian_plugin_installer/version', __FILE__)
+
+Gem::Specification.new do |spec|
+  spec.name          = "atlassian_plugin_installer"
+  spec.version       = AtlassianPluginInstaller::VERSION
+  spec.authors       = ["Martin Brehovsky"]
+  spec.email         = ["mbrehovsky@adaptavist.com"]
+
+  spec.summary       = %q{Installs JIRA plugin using UPM}
+  spec.description   = %q{Installs JIRA plugin using UPM}
+  spec.homepage      = "http://www.adaptavist.com"
+  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.bindir        = "bin"
+  spec.executables   = ["atlassian_plugin_installer"]
+
+  spec.add_development_dependency "bundler", "~> 1.12"
+  spec.add_development_dependency "rake", "~> 10.0"
+end
