@@ -1,0 +1,19 @@
+language: ruby
+notifications:
+  email: false
+  hipchat:
+    rooms:
+      secure: Mk3yGyQ/CYLsximKPCXKjzFf06i5T5rQsLtFI2XVBPhRPK4uy7ixFKHsKhS0ZYSP0htnbkvDvrCsTCECayvIXoP9YxvWWZXNy8/fATPlS1zA2jhdITzK+ol/8OCxc/vSpwm9EchMQVO3AE4wfbNdzAWMCJp5Y1GAqP9djzq7tjEoaUVZSGrDPHH/zk75vMFVYm5VHoqSMQVwXU4dh3YKiv0rogodXrNdlqCeYVH2lZUKe5QX5gu6G4oOyY0kYTpmD/6ENnGICVj12gMP12+xCEl/4447Fxk02bDA5DhBrKTMCgjEZSV0ImXZsH6pbwlU/v4zau251TPkGb0AlvfcbEqB+kEwgN56Rh9w8rGv8q9Qt3sX6btf1iCBcJUNJ4wuH82ZdgwbxYOxh0GLmws+t7mllf/chHoL7VF4ABQV0278psKnKGAZgIkR4mYcRXS4o3uG2/vKxS8nnFDn3Lo5RXie6pvIYvOC02pM83DzRvsyb+LygtwG+KqYHeTvt8i5pfArqL2nww4Klbng9t/OkZ0eliiXo1dcvyqoyIy7LuxRr7kTl4Dqo+L19e4+VUMarTeUJb3j+BThI4l+Rvk0N/smgDPk+0fwphG5wsnMEqoK346ZW6S9M54uHRaAkbPS7abrZXLLD0njASKfAbgIQG0/xJV09HNu4+oGVfv7Aik=
+    template:
+    - 'Gem - %{repository} #%{build_number} (%{build_url}) by %{author}: %{message}'
+rvm:
+- 2.0.0
+- 2.4.0
+deploy:
+  provider: rubygems
+  api_key:
+    secure: RiPkeHQ754HszIdlHOs955XTVnquIUZiIwd5hXFatTIw6dp0hBEKVILqkB5OzO2vo2rlPImiEb8KBHL33izEYyAIS9pKM8kGwAIef8Q/qFxzknVAJMPQVoLusApS3XQ2MZUe08ChBnaPrpUQxWFWKvMH3kuHC44QfQqaOnO/jQJ+kTlHXsSI2norcpQfhTGsoZL68w4oiuQ0me+dt0xf3tbgMaNYc3QoWdzQFZB6H9anGBKYzAjh5vs4JV4BA8oDnRgDMWG0x0OtHq4ViRcsNG+hqIFaHKNzKsDKaFL2Q13ThvtUz0CqSq6ZSakLFqxrFG7JgOu8rAuET3oUXue+Zq9SBYlHZoTGwMjYfcyPM/PVpTPdzY+MAHCDLXfNhrdN0Kq+zHAShqLOL9ttz+v2nkZxlpPJ9GKaf1r9sUn/njHd+A3w7MWcS49EpbKU8IAo3/mBB4Dozj20HiWdIaYRZY/gRqFCHHPto6UdsTmioB5O1ph9KthBJR2wydZagdT6Y1SwJkpNq2TJz2mPtNu1ikYS7YYq7WujYH7WgCm8kHhIAXnuW6LOWTsowvwjeCw+6UrzUXAeKiBcPg8WzArx1kOjV7Uw3JffpCRofSTBPH+lyLIFoTf06vYSUZ1yDs+a6bLM3orbmeOJYBKgQCC9QBHzz0LDCugQlZ69H5HRCGE=
+  gem: atlassian_plugin_installer
+  on:
+    tags: true
+    repo: Adaptavist/atlassian_plugin_installer
