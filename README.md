@@ -14,6 +14,7 @@ atlassian_plugin_installer admin_username admin_password application_url plugin_
 * marketplace_username = "mbrehovsky@adaptavist.com"
 * marketplace_password = "super_secret_password"
 * # timebomb license
+* application_version = "7.2.7"
 
 license = "AAABCA0ODAoPeNpdj01PwkAURffzKyZxZ1IyUzARkllQ24gRaQMtGnaP8VEmtjPNfFT59yJVFyzfu
 bkn796Ux0Bz6SmbUM5nbDzj97RISxozHpMUnbSq88poUaLztFEStUN6MJZ2TaiVpu/YY2M6tI6sQ
