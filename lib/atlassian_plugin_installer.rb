@@ -21,9 +21,7 @@ module AtlassianPluginInstaller
             request.initialize_http_header({"Accept" => "application/vnd.atl.plugins.installed+json"})
             request.basic_auth(@admin_username, @admin_password)
             response = http.request(request)
-            token = response['upm-token'] # parse access token
-            raise "Can not retrieve token from #{@application_url} with #{@admin_username}" unless token
-            token
+            return response.code, response['upm-token'] # parse access token
         end
 
         # Installs plugin
