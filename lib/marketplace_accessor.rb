@@ -70,8 +70,10 @@ module AtlassianPluginInstaller
                 puts "Inspecting #{plugin_key} version #{version}"
                 version_details = get_plugin_details_for_version(plugin_key, version)
                 compatibilities = version_details['compatibilities']
+                puts "Version details:" + compatibilities.inspect
                 if compatibilities
                     compatibilities.each do |comp|
+                        puts "Comp: "+ comp.inspect
                         if ( comp['application'] and comp['application'] == product_name and comp['hosting'] and comp['hosting'][product_hosting])
                             compatibility_with = comp['hosting'][product_hosting]
                             min_version = compatibility_with["min"]["version"]

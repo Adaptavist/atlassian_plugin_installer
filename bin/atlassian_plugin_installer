@@ -11,6 +11,8 @@ marketplace_username = ARGV[5]
 marketplace_password = ARGV[6] == "" ? ENV['MARKETPLACE_PASS'] : ARGV[6]
 license = ARGV[7]
 application_version = ARGV[8]
+application = ARGV[9] || "jira"
+application_hosting = ARGV[10] || "server"
 
 if !(admin_username and admin_password and application_url and plugin_key and (plugin_version or application_version) and marketplace_username and marketplace_password)
     puts "Usage: atlassian_plugin_installer admin_username admin_password application_url plugin_key plugin_version marketplace_username marketplace_password <license> <application_version>"
@@ -23,7 +25,7 @@ marketplace = AtlassianPluginInstaller::MarketplaceAccessor.new(marketplace_user
 if (plugin_version and plugin_version != "")
     plugin_build_number = marketplace.resolve_build_number_from_marketplace(plugin_key, plugin_version)
 elsif (application_version and application_version != "")
-    plugin_build_number = marketplace.get_compatible_plugin_build_number_for_atlassian_product_version(plugin_key, application_version, "jira", "server")
+    plugin_build_number = marketplace.get_compatible_plugin_build_number_for_atlassian_product_version(plugin_key, application_version, application, application_hosting)
 else
     puts "plugin_version or application_version must not be empty"
 end
