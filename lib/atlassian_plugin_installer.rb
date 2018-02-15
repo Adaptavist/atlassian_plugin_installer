@@ -94,5 +94,27 @@ module AtlassianPluginInstaller
             puts "License response: #{res.inspect} #{res.body}"
             res
         end
+
+        def install_application_license(application, license)
+            puts "Installing application license"
+            url = "#{@application_url}/rest/plugins/applications/1.0/installed/#{application}/license"
+            puts license
+            body = {
+               "licenseKey" => license
+            }.to_json
+
+            uri = URI.parse(url)
+            https = Net::HTTP.new(uri.host,uri.port)
+            https.use_ssl = url.start_with? "https"
+            req = Net::HTTP::Post.new("#{uri.request_uri}")
+
+            req.basic_auth(@admin_username, @admin_password)
+            req.body = body
+            req['Accept'] = '*/*'
+            req['Content-Type'] = "application/vnd.atl.plugins+json"
+            res = https.request(req)
+            puts "License response: #{res.inspect} #{res.body.inspect}"
+            res
+        end
     end
 end

@@ -13,51 +13,57 @@ license = ARGV[7]
 application_version = ARGV[8]
 application = ARGV[9] || "jira"
 application_hosting = ARGV[10] || "server"
-
+install_applicaiont_license = ARGV[11] || false
 if !(admin_username and admin_password and application_url and plugin_key and (plugin_version or application_version) and marketplace_username and marketplace_password)
     puts "Usage: atlassian_plugin_installer admin_username admin_password application_url plugin_key plugin_version marketplace_username marketplace_password <license> <application_version>"
     puts "Admin pass can be passed as ADMIN_PASS, marketplace access password as MARKETPLACE_PASS environment variable."
     exit
 end
 
-# retrieve build number for plugin version
-marketplace = AtlassianPluginInstaller::MarketplaceAccessor.new(marketplace_username, marketplace_password)
-if (plugin_version and plugin_version != "")
-    plugin_build_number = marketplace.resolve_build_number_from_marketplace(plugin_key, plugin_version)
-elsif (application_version and application_version != "")
-    plugin_build_number = marketplace.get_compatible_plugin_build_number_for_atlassian_product_version(plugin_key, application_version, application, application_hosting)
-else
-    puts "plugin_version or application_version must not be empty"
-end
-
-raise "Can not determine build number for #{plugin_key} with provided version #{plugin_version} and/or application version #{application_version}" unless plugin_build_number
-
 installer = AtlassianPluginInstaller::AtlassianPluginInstaller.new(application_url, admin_username, admin_password)
-# wait for the application to start and fetch the token
-token = nil
-counter = 0
-retries = 20
-sleep_time = 10
-while (!token and counter < retries) do
-    status, token = installer.fetch_application_access_token
-    if status != 200
-        puts "Token not found, status received: #{status}, retrying in #{sleep_time}, try #{counter}/#{retries}"
-        sleep(sleep_time)
+
+puts install_applicaiont_license
+if install_applicaiont_license.to_s != "true"
+    # retrieve build number for plugin version
+    marketplace = AtlassianPluginInstaller::MarketplaceAccessor.new(marketplace_username, marketplace_password)
+    if (plugin_version and plugin_version != "")
+        plugin_build_number = marketplace.resolve_build_number_from_marketplace(plugin_key, plugin_version)
+    elsif (application_version and application_version != "")
+        plugin_build_number = marketplace.get_compatible_plugin_build_number_for_atlassian_product_version(plugin_key, application_version, application, application_hosting)
+    else
+        puts "plugin_version or application_version must not be empty"
     end
-    counter=counter+1
-end
 
-unless token
-    puts "Can not fetch the token from #{application_url}. Is it running and are the creds ok?"
-    exit
-end
-# install plugin using the token
-installer.install_plugin(plugin_key, plugin_build_number, token)
+    raise "Can not determine build number for #{plugin_key} with provided version #{plugin_version} and/or application version #{application_version}" unless plugin_build_number
 
-unless (installer.installation_completed(plugin_key))
-    raise "Installation failed, plugin not available."
-end
+    # wait for the application to start and fetch the token
+    token = nil
+    counter = 0
+    retries = 20
+    sleep_time = 10
+    while (!token and counter < retries) do
+        status, token = installer.fetch_application_access_token
+        if status != 200
+            puts "Token not found, status received: #{status}, retrying in #{sleep_time}, try #{counter}/#{retries}"
+            sleep(sleep_time)
+        end
+        counter=counter+1
+    end
 
-if license and license != "" 
-    installer.install_license(plugin_key, license)
+    unless token
+        puts "Can not fetch the token from #{application_url}. Is it running and are the creds ok?"
+        exit
+    end
+    # install plugin using the token
+    installer.install_plugin(plugin_key, plugin_build_number, token)
+
+    unless (installer.installation_completed(plugin_key))
+        raise "Installation failed, plugin not available."
+    end
+
+    if license and license != ""
+        installer.install_license(plugin_key, license)
+    end
+else
+    installer.install_application_license(plugin_key, license)
 end
