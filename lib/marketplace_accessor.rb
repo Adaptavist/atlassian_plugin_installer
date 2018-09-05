@@ -76,7 +76,7 @@ module AtlassianPluginInstaller
                     if compatibilities
                         compatibilities.each do |comp|
                             puts "Comp: "+ comp.inspect
-                            if ( comp['application'] and comp['application'] == product_name and comp['hosting'] and comp['hosting'][product_hosting])
+                            if ( version_details['status'] == 'public' and comp['application'] and comp['application'] == product_name and comp['hosting'] and comp['hosting'][product_hosting])
                                 compatibility_with = comp['hosting'][product_hosting]
                                 min_version = compatibility_with["min"]["version"]
                                 max_version = compatibility_with["max"]["version"]
